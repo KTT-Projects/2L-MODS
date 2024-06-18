@@ -4,7 +4,14 @@
 
 ## Dependencies installation:
 
-To get started with 2L-MODS, you need to install the following dependency:
+To get started with 2L-MODS, you need to install the following dependencies:
+
+- Python (tested in version 3.10.3 or higher)
+- Requests (tested in version 2.31.0 or higher)
+
+To install Python, you can visit the official Python website and follow the instructions for your operating system.
+
+To install TKInter and request, you can use the following command:
 
 ```
 pip install requests
