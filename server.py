@@ -1,5 +1,6 @@
 # Error codes
 # 1: No internet connection
+# 2: Connection error
 
 
 # Libraries
@@ -12,7 +13,6 @@
 
 # Header -> length of the message in bytes
 HEADER = 64
-PORT = 5050
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 
@@ -40,12 +40,19 @@ def handle_client(conn, addr):
 def start_server():
     if network.check_internet_connection():
         SERVER = network.get_public_ip()
-        ADDR = (SERVER, PORT)
         if network.is_ipv4(SERVER):
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         elif network.is_ipv6(SERVER):
             server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        server.bind(ADDR)
+        port = 5050
+        while True:
+            ADDR = (SERVER, port)
+            try:
+                server.bind(ADDR)
+                break
+            except OSError:
+                print(f"Port {port} is occupied. Trying another port...")
+            port += 1
         server.listen()
         print(f"Listening on {SERVER}")
         while True:

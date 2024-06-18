@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import messagebox
 import server
 import client
 import threading
@@ -25,28 +26,38 @@ def connect_to_server(server_address):
         target=start_client_thread, args=(server_address, result_queue)
     )
     client_thread.start()
-    # Wait for the thread to finish and get the result
-    client_thread.join()
-    result = result_queue.get()
-    # Update the connection status label based on the result
-    if result:
-        connection_status_label.config(
-            text="接続状態: 🟢 接続されました (" + server_address + ")"
-        )
-        # Delete input label, field, and connect button
-        ip_input_label.pack_forget()
-        entry.pack_forget()
-        connect_button.pack_forget()
+    # Check the connection status periodically
+    root.after(100, check_connection_status, result_queue, server_address)
+
+
+def check_connection_status(result_queue, server_address):
+    if result_queue.empty():
+        # If the result queue is empty, check again after 100ms
+        root.after(100, check_connection_status, result_queue, server_address)
     else:
-        connection_status_label.config(text="接続状態: ⚠️接続に失敗しました")
-        # Clear the entry field
+        result = result_queue.get()
+        # Update the connection status label based on the result
+        if result:
+            current_text = connection_status_label.cget("text")
+            if current_text == "接続状態: 🔴 未接続":
+                current_text = ""
+            new_text = (
+                current_text + "\n接続状態: 🟢 接続されました (" + server_address + ")"
+            )
+            connection_status_label.config(text=new_text)
+        else:
+            # give out an alert on GUI as a message box
+            messagebox.showerror(
+                "接続エラー",
+                "⚠️ 接続に失敗しました。\n\n該当ユーザーが2L-MODSを起動しているか、IPアドレスが正しいかを確認してください。",
+            )
+            # Clear the entry field
         entry.delete(0, END)
 
 
 # Start the server in a separate thread
 server_thread = threading.Thread(target=start_server_thread)
 server_thread.start()
-
 
 root = Tk()
 root.title("2L-MODS")
