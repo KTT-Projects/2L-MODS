@@ -10,6 +10,7 @@
 # ip_address -> checking IP version
 
 
+# Header -> length of the message in bytes
 HEADER = 64
 PORT = 5050
 FORMAT = "utf-8"
@@ -19,37 +20,8 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 import socket
 import threading
 from requests import get
-import urllib.request
 from ipaddress import ip_address
-
-
-def check_internet_connection():
-    try:
-        urllib.request.urlopen("https://www.google.com")
-        return True
-    except urllib.error.URLError:
-        return False
-
-
-def get_public_ip():
-    if check_internet_connection():
-        return get("https://api64.ipify.org").text
-    else:
-        return "[Error:1]"
-
-
-def is_ipv4(ip):
-    if ip_address(ip).version == 4:
-        return True
-    else:
-        return False
-
-
-def is_ipv6(ip):
-    if ip_address(ip).version == 6:
-        return True
-    else:
-        return False
+import network
 
 
 def handle_client(conn, addr):
@@ -66,12 +38,12 @@ def handle_client(conn, addr):
 
 
 def start_server():
-    if check_internet_connection():
-        SERVER = get_public_ip()
+    if network.check_internet_connection():
+        SERVER = network.get_public_ip()
         ADDR = (SERVER, PORT)
-        if is_ipv4(SERVER):
+        if network.is_ipv4(SERVER):
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        elif is_ipv6(SERVER):
+        elif network.is_ipv6(SERVER):
             server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         server.bind(ADDR)
         server.listen()
@@ -81,3 +53,5 @@ def start_server():
             thread = threading.Thread(target=handle_client, args=(conn, addr))
             thread.start()
             print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+    else:
+        print("[Error:1]")
