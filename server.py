@@ -55,9 +55,9 @@ def start_server():
             if port > 65535:
                 print("[Error:3]")
                 return False
-            ADDR = (server_address, port)
+            addr = (server_address, port)
             try:
-                server.bind(ADDR)
+                server.bind(addr)
                 break
             except OSError:
                 print(f"Port {port} is occupied. Trying another port...")

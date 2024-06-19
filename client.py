@@ -6,9 +6,10 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 
 def connect_to_server(server, port):
+    print(f"Connecting to {server} : {port}")
     client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     try:
-        client.connect((server, port))
+        client.connect((server, int(port)))
         print("Connected to the server!")
         return True
     except:

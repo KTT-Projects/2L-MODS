@@ -27,10 +27,10 @@ def connect_to_server(server_address, port_number):
     )
     client_thread.start()
     # Check the connection status periodically
-    root.after(100, check_connection_status, result_queue, server_address)
+    root.after(100, check_connection_status, result_queue, server_address, port_number)
 
 
-def check_connection_status(result_queue, server_address):
+def check_connection_status(result_queue, server_address, port_number):
     if result_queue.empty():
         # If the result queue is empty, check again after 100ms
         root.after(100, check_connection_status, result_queue, server_address)
@@ -41,16 +41,17 @@ def check_connection_status(result_queue, server_address):
             current_text = connection_status_label.cget("text")
             if current_text == "Status: 🔴 Disconnected":
                 current_text = ""
-            new_text = current_text + "\nStatus: 🟢 Connected to " + server_address
+            new_text = f"{current_text}\nStatus: 🟢 Connected to {server_address} : {port_number}"
             connection_status_label.config(text=new_text)
+            # Clear the entry fields
+            entry.delete(0, END)
+            port_entry.delete(0, END)
         else:
             # give out an alert on GUI as a message box
             messagebox.showerror(
                 "Connection Error",
                 "⚠️ Connection Failed\n\nPlease check the IP address and try again.",
             )
-            # Clear the entry field
-            entry.delete(0, END)
 
 
 def observe_server_port_change():
