@@ -1,6 +1,7 @@
 # Error codes
 # 1: No internet connection
 # 2: Connection error
+# 3: All ports occupied
 
 
 # Libraries
@@ -15,6 +16,8 @@
 HEADER = 64
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
+port = -1
+server_address = ""  # public IP
 
 
 import socket
@@ -38,15 +41,21 @@ def handle_client(conn, addr):
 
 
 def start_server():
+    global port
+    global server_address
     if network.check_internet_connection():
-        SERVER = network.get_public_ip()
-        if network.is_ipv4(SERVER):
+        server_address = network.get_public_ip()
+        if network.is_ipv4(server_address):
             server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        elif network.is_ipv6(SERVER):
+        elif network.is_ipv6(server_address):
             server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        port = 5050
         while True:
-            ADDR = (SERVER, port)
+            if port == -1:
+                port = 5050
+            if port > 65535:
+                print("[Error:3]")
+                return False
+            ADDR = (server_address, port)
             try:
                 server.bind(ADDR)
                 break
@@ -54,7 +63,7 @@ def start_server():
                 print(f"Port {port} is occupied. Trying another port...")
             port += 1
         server.listen()
-        print(f"Listening on {SERVER}")
+        print(f"Listening on {server_address} : {port}")
         while True:
             conn, addr = server.accept()
             thread = threading.Thread(target=handle_client, args=(conn, addr))
