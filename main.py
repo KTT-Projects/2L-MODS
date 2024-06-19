@@ -11,19 +11,19 @@ def start_server_thread():
     server.start_server()
 
 
-def start_client_thread(server_address, result_queue):
+def start_client_thread(server_address, port_number, result_queue):
     # Connect to the server and get the result
-    result = client.connect_to_server(server_address)
+    result = client.connect_to_server(server_address, port_number)
     # Put the result in the queue
     result_queue.put(result)
 
 
-def connect_to_server(server_address):
+def connect_to_server(server_address, port_number):
     # Create a queue to get the return value from the thread
     result_queue = queue.Queue()
     # Start a new client connection in a separate thread
     client_thread = threading.Thread(
-        target=start_client_thread, args=(server_address, result_queue)
+        target=start_client_thread, args=(server_address, port_number, result_queue)
     )
     client_thread.start()
     # Check the connection status periodically
@@ -39,20 +39,28 @@ def check_connection_status(result_queue, server_address):
         # Update the connection status label based on the result
         if result:
             current_text = connection_status_label.cget("text")
-            if current_text == "接続状態: 🔴 未接続":
+            if current_text == "Status: 🔴 Disconnected":
                 current_text = ""
-            new_text = (
-                current_text + "\n接続状態: 🟢 接続されました (" + server_address + ")"
-            )
+            new_text = current_text + "\nStatus: 🟢 Connected to " + server_address
             connection_status_label.config(text=new_text)
         else:
             # give out an alert on GUI as a message box
             messagebox.showerror(
-                "接続エラー",
-                "⚠️ 接続に失敗しました。\n\n該当ユーザーが2L-MODSを起動しているか、IPアドレスが正しいかを確認してください。",
+                "Connection Error",
+                "⚠️ Connection Failed\n\nPlease check the IP address and try again.",
             )
             # Clear the entry field
-        entry.delete(0, END)
+            entry.delete(0, END)
+
+
+def observe_server_port_change():
+    # Check for changes in the server.port variable
+    if server.port != -1:
+        user_status.config(
+            text=f"Listening on {server.server_address} : {server.port}\n"
+        )
+    # Schedule the next observation
+    root.after(100, observe_server_port_change)
 
 
 # Start the server in a separate thread
@@ -63,20 +71,27 @@ root = Tk()
 root.title("2L-MODS")
 root.geometry("800x800")
 
-your_ip_and_status_label = Label(
-    root, text="あなたのIPアドレス: " + network.get_public_ip() + "\n"
-)
-connection_status_label = Label(root, text="接続状態: 🔴 未接続")
-ip_input_label = Label(root, text="相手のIPアドレスを入力してください。")
+user_status = Label(root, text="Initializing...\n")
+connection_status_label = Label(root, text="Status: 🔴 Disconnected")
+ip_input_label = Label(root, text="Enter other IP address below")
 entry = Entry(root, width=50)
+port_label = Label(root, text="Port Number")
+port_entry = Entry(root, width=50)
 connect_button = Button(
-    root, text="接続", command=lambda: connect_to_server(entry.get())
+    root,
+    text="Connect",
+    command=lambda: connect_to_server(entry.get(), port_entry.get()),
 )
 
-your_ip_and_status_label.pack()
+user_status.pack()
 connection_status_label.pack()
 ip_input_label.pack()
 entry.pack()
+port_label.pack()
+port_entry.pack()
 connect_button.pack()
+
+# Start observing the server.port variable
+observe_server_port_change()
 
 root.mainloop()
