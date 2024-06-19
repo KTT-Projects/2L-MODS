@@ -11,47 +11,43 @@ def start_server_thread():
     server.start_server()
 
 
-def start_client_thread(server_address, port_number, result_queue):
-    # Connect to the server and get the result
-    result = client.connect_to_server(server_address, port_number)
-    # Put the result in the queue
-    result_queue.put(result)
+def start_client_thread(server_address, port_number):
+    client.connect_to_server(server_address, port_number)
 
 
 def connect_to_server(server_address, port_number):
-    # Create a queue to get the return value from the thread
-    result_queue = queue.Queue()
     # Start a new client connection in a separate thread
     client_thread = threading.Thread(
-        target=start_client_thread, args=(server_address, port_number, result_queue)
+        target=start_client_thread,
+        args=(
+            server_address,
+            port_number,
+        ),
     )
     client_thread.start()
     # Check the connection status periodically
-    root.after(100, check_connection_status, result_queue, server_address)
+    root.after(100, check_connection_status, server_address, port_number)
 
 
-def check_connection_status(result_queue, server_address):
-    if result_queue.empty():
-        # If the result queue is empty, check again after 100ms
-        root.after(100, check_connection_status, result_queue, server_address)
+def check_connection_status(server_address, port_number):
+    if (server_address, port_number, "Connected") in client.connections:
+        current_text = connection_status_label.cget("text")
+        if current_text == "Status: 🔴 Disconnected":
+            current_text = ""
+        new_text = (
+            f"{current_text}\nStatus: 🟢 Connected to {server_address} : {port_number}"
+        )
+        connection_status_label.config(text=new_text)
+        entry.delete(0, END)
+        port_entry.delete(0, END)
+    elif (server_address, port_number, "Failed") in client.connections:
+        messagebox.showerror(
+            "Connection Error",
+            "⚠️ Connection Failed\n\nPlease check the IP address and try again.",
+        )
+        client.connections.remove((server_address, port_number, "Failed"))
     else:
-        result = result_queue.get()
-        # Update the connection status label based on the result
-        if result:
-            current_text = connection_status_label.cget("text")
-            if current_text == "Status: 🔴 Disconnected":
-                current_text = ""
-            new_text = f"{current_text}\nStatus: 🟢 Connected to {server_address} : {port_entry.get()}"
-            connection_status_label.config(text=new_text)
-            # Clear the entry fields
-            entry.delete(0, END)
-            port_entry.delete(0, END)
-        else:
-            # give out an alert on GUI as a message box
-            messagebox.showerror(
-                "Connection Error",
-                "⚠️ Connection Failed\n\nPlease check the IP address and try again.",
-            )
+        root.after(100, check_connection_status, server_address, port_number)
 
 
 def observe_server_port_change():
@@ -60,6 +56,7 @@ def observe_server_port_change():
         user_status.config(
             text=f"Listening on {server.server_address} : {server.port}\n"
         )
+        return
     # Schedule the next observation
     root.after(100, observe_server_port_change)
 
@@ -81,7 +78,7 @@ port_entry = Entry(root, width=50)
 connect_button = Button(
     root,
     text="Connect",
-    command=lambda: connect_to_server(entry.get(), port_entry.get()),
+    command=lambda: connect_to_server(entry.get(), int(port_entry.get())),
 )
 
 user_status.pack()
