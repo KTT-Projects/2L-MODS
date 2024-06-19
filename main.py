@@ -94,8 +94,23 @@ def send_message():
     selected_id = id_entry.get()
     message = message_entry.get()
     # Send the message to the selected ID
-    client.send(message, client.clients[int(selected_id)])
+    client.send(message, client.clients[int(selected_id)], int(selected_id))
     message_entry.delete(0, END)
+    if message == client.DISCONNECT_MESSAGE:
+        id_entry.delete(0, END)
+        update_all_connections()
+
+
+def update_all_connections():
+    # Reset the connections list once and update it
+    connection_status_label.config(text="")
+    if len(client.connections) == 0:
+        connection_status_label.config(text="Status: 🔴 Disconnected")
+        return
+    new_text = ""
+    for connection in client.connections:
+        new_text += f"[{client.connections.index(connection)}] Status: 🟢 Connected to {connection[0]} : {connection[1]}\n"
+    connection_status_label.config(text=new_text)
 
 
 # Start the server in a separate thread

@@ -1,3 +1,9 @@
+import socket
+import threading
+from requests import get
+from ipaddress import ip_address
+import network
+
 # Error codes
 # 1: No internet connection
 # 2: Connection error
@@ -19,26 +25,29 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 port = -1
 server_address = ""
 is_listening = False
-
-
-import socket
-import threading
-from requests import get
-from ipaddress import ip_address
-import network
+connections = []
 
 
 def handle_client(conn, addr):
+    global connections
     print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
+    port_number = -1
+    init_msg_length = conn.recv(HEADER).decode(FORMAT)
+    init_msg_length = int(init_msg_length)
+    init_msg = conn.recv(init_msg_length).decode(FORMAT)
+    port_number = int(init_msg)
+    connections.append((addr[0], port_number))
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT)
         msg_length = int(msg_length)
         msg = conn.recv(msg_length).decode(FORMAT)
         if msg == DISCONNECT_MESSAGE:
             connected = False
-        print(f"[{addr}] {msg}")
     conn.close()
+    connections.remove((addr[0], port_number))
+    print(f"[DISCONNECTED] {addr} disconnected.")
+    print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
 
 
 def start_server():
@@ -71,6 +80,6 @@ def start_server():
             conn, addr = server.accept()
             thread = threading.Thread(target=handle_client, args=(conn, addr))
             thread.start()
-            print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
+            print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
     else:
         print("[Error:1]")
