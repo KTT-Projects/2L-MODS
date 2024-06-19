@@ -17,7 +17,8 @@ HEADER = 64
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 port = -1
-server_address = ""  # public IP
+server_address = ""
+is_listening = False
 
 
 import socket
@@ -43,6 +44,7 @@ def handle_client(conn, addr):
 def start_server():
     global port
     global server_address
+    global is_listening
     if network.check_internet_connection():
         server_address = network.get_public_ip()
         if network.is_ipv4(server_address):
@@ -54,7 +56,7 @@ def start_server():
                 port = 5050
             if port > 65535:
                 print("[Error:3]")
-                return False
+                return
             addr = (server_address, port)
             try:
                 server.bind(addr)
@@ -63,6 +65,7 @@ def start_server():
                 print(f"Port {port} is occupied. Trying another port...")
             port += 1
         server.listen()
+        is_listening = True
         print(f"Listening on {server_address} : {port}")
         while True:
             conn, addr = server.accept()

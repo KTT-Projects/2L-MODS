@@ -1,6 +1,5 @@
 import socket
 import network
-import time
 
 HEADER = 64
 FORMAT = "utf-8"
@@ -8,9 +7,11 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 
 clients = []
 connections = []
+message = ""
 
 
 def connect_to_server(server, port):
+    global clients, connections
     print(f"Connecting to {server} : {port}")
     if network.is_ipv4(server):
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -21,10 +22,6 @@ def connect_to_server(server, port):
         clients.append(client)
         connections.append((server, port, "Connected"))
         print("Connected to the server!")
-        send("Hello World!", client)
-        while True:
-            send("Hello World!", client)
-            time.sleep(10)  # execute every 10 seconds
     except:
         connections.append((server, port, "Failed"))
         print("[Error:2]")
