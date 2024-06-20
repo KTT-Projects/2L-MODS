@@ -1,10 +1,10 @@
+import os
 from tkinter import *
 from tkinter import messagebox
 import server
 import client
 import threading
-import network
-import queue
+import json
 
 
 def start_server_thread():
@@ -12,7 +12,7 @@ def start_server_thread():
 
 
 def start_client_thread(server_address, port_number):
-    client.connect_to_server(server_address, port_number)
+    client.connect_to_server(server_address, port_number, server.port)
 
 
 def connect_to_server(server_address, port_number):
@@ -49,12 +49,10 @@ def check_connection_status(server_address, port_number):
             current_text = ""
         new_text = f"{current_text}[{client.connections.index((server_address, port_number, 'Connected'))}] Status: 🟢 Connected to {server_address} : {port_number}\n"
         connection_status_label.config(text=new_text)
-        entry.delete(0, END)
-        port_entry.delete(0, END)
     elif (server_address, port_number, "Failed") in client.connections:
         messagebox.showerror(
             "Connection Error",
-            "⚠️ Connection Failed\n\nPlease check the IP address and try again.",
+            f"⚠️ Connection Failed\n\nPlease check the IP address ({server_address}) and port ({port_number}) and try again.",
         )
         client.connections.remove((server_address, port_number, "Failed"))
     else:
@@ -113,25 +111,56 @@ def update_all_connections():
     connection_status_label.config(text=new_text)
 
 
+def load_config():
+    global config_data
+    try:
+        with open("config.json", "r") as file:
+            config_data = json.load(file)
+        return True
+    except FileNotFoundError:
+        print("[ERROR] Config file not found.")
+        messagebox.showerror(
+            "Config Error",
+            "⚠️ Config File Not Found\n\nPlease create a config.json file.",
+        )
+        return False
+
+
+def attempt_connection():
+    for peer in config_data["peers"]:
+        if peer["ip"] != server.server_address or peer["port"] != server.port:
+            print(f"[INFO] Connecting to {peer['ip']} : {peer['port']}")
+            connect_to_server(peer["ip"], peer["port"])
+
+
+def data_setup():
+    # Create a folder for the data if it doesn't exist
+    try:
+        os.mkdir("./data/" + config_data["network_name"])
+    except FileExistsError:
+        pass
+
+
+def join_network():
+    print("[INFO] Attempting to connect to the network...")
+    flag = load_config()
+    if flag:
+        attempt_connection()
+        data_setup()
+    else:
+        print("[ERROR] Failed to connect to the network.")
+
+
 # Start the server in a separate thread
 server_thread = threading.Thread(target=start_server_thread)
 server_thread.start()
-
 root = Tk()
 root.title("2L-MODS")
 root.geometry("800x800")
 
 user_status = Label(root, text="Initializing...\n")
 connection_status_label = Label(root, text="Status: 🔴 Disconnected")
-ip_input_label = Label(root, text="Enter other IP address below")
-entry = Entry(root, width=50)
-port_label = Label(root, text="Port Number")
-port_entry = Entry(root, width=50)
-connect_button = Button(
-    root,
-    text="Connect",
-    command=lambda: connect_to_server(entry.get(), int(port_entry.get())),
-)
+connect_button = Button(root, text="Join the Network", command=join_network)
 
 id_label = Label(root, text="ID")
 id_entry = Entry(root, width=50)
@@ -141,10 +170,6 @@ send_button = Button(root, text="Send", command=send_message)
 
 user_status.pack()
 connection_status_label.pack()
-ip_input_label.pack()
-entry.pack()
-port_label.pack()
-port_entry.pack()
 connect_button.pack()
 
 id_label.pack()
@@ -153,7 +178,6 @@ message_label.pack()
 message_entry.pack()
 send_button.pack()
 
-# Start observing the server.port variable
 observe_server_port_change()
 
 root.mainloop()
