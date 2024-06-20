@@ -4,21 +4,7 @@ from requests import get
 from ipaddress import ip_address
 import network
 
-# Error codes
-# 1: No internet connection
-# 2: Connection error
-# 3: All ports occupied
 
-
-# Libraries
-# socket -> internet connection
-# threading -> multiple connections (concurrent execution)
-# requests -> getting public IP
-# urllib -> checking internet connection
-# ip_address -> checking IP version
-
-
-# Header -> length of the message in bytes
 HEADER = 64
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
@@ -30,22 +16,27 @@ connections = dict()
 
 def handle_client(conn, addr):
     global connections
-    print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
     while connected:
-        msg_length = conn.recv(HEADER).decode(FORMAT)
-        msg_length = int(msg_length)
-        msg = conn.recv(msg_length).decode(FORMAT)
-        if connections.get(addr) is None:
-            connections[addr] = msg
-            print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
-        elif msg == DISCONNECT_MESSAGE:
+        try:
+            msg_length = conn.recv(HEADER).decode(FORMAT)
+            if not msg_length:
+                break
+            msg_length = int(msg_length)
+            msg = conn.recv(msg_length).decode(FORMAT)
+            if connections.get(addr) is None:
+                connections[addr] = msg
+                print(f"[NEW CONNECTION] {addr[0]} : {msg} connected.")
+                print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
+            elif msg == DISCONNECT_MESSAGE:
+                connected = False
+            else:
+                print(f"[{addr[0]} : {connections[addr]}] {msg}")
+        except ConnectionResetError:
             connected = False
-        else:
-            print(f"[{addr}] {msg}")
     conn.close()
     connections.pop(addr)
-    print(f"[DISCONNECTED] {addr} disconnected.")
+    print(f"[DISCONNECTED] {addr[0]} : {connections[addr]} disconnected.")
     print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
 
 
@@ -63,7 +54,7 @@ def start_server():
             if port == -1:
                 port = 5050
             if port > 65535:
-                print("[Error:3]")
+                print("[ERROR] No available ports.")
                 return
             addr = (server_address, port)
             try:
@@ -80,4 +71,4 @@ def start_server():
             thread = threading.Thread(target=handle_client, args=(conn, addr))
             thread.start()
     else:
-        print("[Error:1]")
+        print("[ERROR] No internet connection.")

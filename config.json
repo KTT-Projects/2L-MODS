@@ -1,0 +1,22 @@
+{
+  "network_name": "test_network",
+  "peers": [
+    {
+      "ip": "240b:c020:440:95f9:e51b:9bb3:1ba1:20de",
+      "port": 5052
+    },
+    {
+      "ip": "240b:c020:440:95f9:e51b:9bb3:1ba1:20de",
+      "port": 5053
+    },
+    {
+      "ip": "240b:c020:440:95f9:e51b:9bb3:1ba1:20de",
+      "port": 5054
+    }
+  ],
+  "model_distributor": {
+    "ip": "192.168.0.1",
+    "port": 8000
+  },
+  "distribute": true
+}

@@ -11,7 +11,7 @@ connections = []
 message = ""
 
 
-def connect_to_server(server, port):
+def connect_to_server(server, port, my_port):
     global clients, connections
     print(f"Connecting to {server} : {port}")
     if network.is_ipv4(server):
@@ -24,10 +24,10 @@ def connect_to_server(server, port):
         connections.append((server, port, "Connected"))
         print(f"[CONNECTED TO SERVER] {server} : {port}")
         print(f"[ACTIVE CONNECTIONS AS CLIENT] {len(clients)}")
-        send(str(port), client, len(clients) - 1)
+        send(str(my_port), client, len(clients) - 1)
     except:
         connections.append((server, port, "Failed"))
-        print("[Error:2]")
+        print("[ERROR] Failed to connect to the server.")
         return
 
 
