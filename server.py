@@ -25,7 +25,7 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 port = -1
 server_address = ""
 is_listening = False
-connections = []
+connections = dict()
 
 
 def handle_client(conn, addr):
@@ -33,19 +33,18 @@ def handle_client(conn, addr):
     print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
     port_number = -1
-    init_msg_length = conn.recv(HEADER).decode(FORMAT)
-    init_msg_length = int(init_msg_length)
-    init_msg = conn.recv(init_msg_length).decode(FORMAT)
-    port_number = int(init_msg)
-    connections.append((addr[0], port_number))
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT)
         msg_length = int(msg_length)
         msg = conn.recv(msg_length).decode(FORMAT)
+        if port_number == -1:
+            port_number = int(msg)
+            connections[addr] = port_number
         if msg == DISCONNECT_MESSAGE:
             connected = False
+        print(f"[{addr}] {msg}")
     conn.close()
-    connections.remove((addr[0], port_number))
+    connections.pop(addr)
     print(f"[DISCONNECTED] {addr} disconnected.")
     print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
 
