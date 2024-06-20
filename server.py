@@ -1,3 +1,9 @@
+import socket
+import threading
+from requests import get
+from ipaddress import ip_address
+import network
+
 # Error codes
 # 1: No internet connection
 # 2: Connection error
@@ -17,32 +23,36 @@ HEADER = 64
 FORMAT = "utf-8"
 DISCONNECT_MESSAGE = "!DISCONNECT"
 port = -1
-server_address = ""  # public IP
-
-
-import socket
-import threading
-from requests import get
-from ipaddress import ip_address
-import network
+server_address = ""
+is_listening = False
+connections = dict()
 
 
 def handle_client(conn, addr):
+    global connections
     print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT)
         msg_length = int(msg_length)
         msg = conn.recv(msg_length).decode(FORMAT)
-        if msg == DISCONNECT_MESSAGE:
+        if connections.get(addr) is None:
+            connections[addr] = msg
+            print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
+        elif msg == DISCONNECT_MESSAGE:
             connected = False
-        print(f"[{addr}] {msg}")
+        else:
+            print(f"[{addr}] {msg}")
     conn.close()
+    connections.pop(addr)
+    print(f"[DISCONNECTED] {addr} disconnected.")
+    print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
 
 
 def start_server():
     global port
     global server_address
+    global is_listening
     if network.check_internet_connection():
         server_address = network.get_public_ip()
         if network.is_ipv4(server_address):
@@ -54,7 +64,7 @@ def start_server():
                 port = 5050
             if port > 65535:
                 print("[Error:3]")
-                return False
+                return
             addr = (server_address, port)
             try:
                 server.bind(addr)
@@ -63,11 +73,11 @@ def start_server():
                 print(f"Port {port} is occupied. Trying another port...")
             port += 1
         server.listen()
+        is_listening = True
         print(f"Listening on {server_address} : {port}")
         while True:
             conn, addr = server.accept()
             thread = threading.Thread(target=handle_client, args=(conn, addr))
             thread.start()
-            print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
     else:
         print("[Error:1]")
