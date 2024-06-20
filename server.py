@@ -38,11 +38,11 @@ def handle_client(conn, addr):
         msg = conn.recv(msg_length).decode(FORMAT)
         if connections.get(addr) is None:
             connections[addr] = msg
-            print(f"[{addr}] {msg} connected.")
             print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
-        if msg == DISCONNECT_MESSAGE:
+        elif msg == DISCONNECT_MESSAGE:
             connected = False
-        print(f"[{addr}] {msg}")
+        else:
+            print(f"[{addr}] {msg}")
     conn.close()
     connections.pop(addr)
     print(f"[DISCONNECTED] {addr} disconnected.")
