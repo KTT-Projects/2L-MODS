@@ -32,14 +32,14 @@ def handle_client(conn, addr):
     global connections
     print(f"[NEW CONNECTION] {addr} connected.")
     connected = True
-    port_number = -1
     while connected:
         msg_length = conn.recv(HEADER).decode(FORMAT)
         msg_length = int(msg_length)
         msg = conn.recv(msg_length).decode(FORMAT)
-        if port_number == -1:
-            port_number = int(msg)
-            connections[addr] = port_number
+        if connections.get(addr) is None:
+            connections[addr] = msg
+            print(f"[{addr}] {msg} connected.")
+            print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
         if msg == DISCONNECT_MESSAGE:
             connected = False
         print(f"[{addr}] {msg}")
@@ -79,6 +79,5 @@ def start_server():
             conn, addr = server.accept()
             thread = threading.Thread(target=handle_client, args=(conn, addr))
             thread.start()
-            print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
     else:
         print("[Error:1]")
