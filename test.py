@@ -1,18 +1,24 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-model_path = 'ahxt/LiteLlama-460M-1T'
+model_path = 'gpt2-medium'
 
 model = AutoModelForCausalLM.from_pretrained(model_path)
-model.to(torch.device('mps'))
 tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+device = torch.device('mps')
+model.to(device)
 model.eval()
 
+prompt = 'The frture of the Japan is'
+inputs = tokenizer(prompt, return_tensors='pt')
 
-prompt = 'What is the future of the AI?'
-input = tokenizer(prompt, return_tensors="pt")
-token = model.generate(input, max_length=300)
-generated = tokenizer.decode(token[0].toList, skip_special_tokens=True)
+inputs = {key: value.to(device) for key, value in inputs.items()}
+
+with torch.no_grad():
+  token = model.generate(**inputs, max_length=300, eos_token_id=50256, pad_token_id=50256)
+
+generated = tokenizer.decode(token[0].tolist(), skip_special_tokens=True)
 print(generated)
 # input = {key: value.to(torch.device('mps')) for key, value in input.items()}
 
