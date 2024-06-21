@@ -1,16 +1,16 @@
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-model_path = 'gpt2-medium'
+model_name = 'mistralai/Mistral-7B-v0.1'
 
-model = AutoModelForCausalLM.from_pretrained(model_path)
-tokenizer = AutoTokenizer.from_pretrained(model_path)
+model = AutoModelForCausalLM.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 device = torch.device('mps')
 model.to(device)
 model.eval()
 
-prompt = 'The frture of the Japan is'
+prompt = 'What is the future of Japan?'
 inputs = tokenizer(prompt, return_tensors='pt')
 
 inputs = {key: value.to(device) for key, value in inputs.items()}
