@@ -2,27 +2,31 @@ import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
 
-# my_token = "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" (add token=my_token to from_pretrained)
-model_name = "openai-community/gpt2-medium"
-# model_name = "mistralai/Mistral-7B-v0.1"
+model_name = "microsoft/Phi-3-vision-128k-instruct"
 
-model = AutoModelForCausalLM.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
 
 device = torch.device("mps")
-# device = torch.device("cpu")
 model.to(device)
-model.eval()
+layers = model.transformer.h
+
+def forward_layers (inputs, layers, device):
+  hidden_states = model.transformer.wte(inputs).to(device)
+  attension_mask = torch.ones_like(inputs, device=device)
+  for i, layer in enumerate(layers):
+    print(f"Layer {i} input shape: {hidden_states.shape}")
+    hidden_states = layer(hidden_states, attention_mask=attension_mask)[0]
+    print(f"Layer {i} output shape: {hidden_states.shape}")
+  return hidden_states
 
 prompt = "What is the future of Japan?"
-inputs = tokenizer(prompt, return_tensors="pt")
+inputs = tokenizer(prompt, return_tensors="pt").input_ids.to(device)
 
-inputs = {key: value.to(device) for key, value in inputs.items()}
+hidden_states = forward_layers(inputs, layers, device)
 
-with torch.no_grad():
-  token = model.generate(**inputs, max_length=100, eos_token_id=50256, pad_token_id=50256)
+logits = model.lm_head(hidden_states)
 
-generated = tokenizer.decode(token[0].tolist(), skip_special_tokens=True)
+generated = tokenizer.decode(torch.argmax(logits, dim=-1).squeeze(), skip_special_tokens=True)
 print(generated)
