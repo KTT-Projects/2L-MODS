@@ -3,6 +3,7 @@ import threading
 import network
 import json
 import server
+import client
 
 # def server_mode(server_socket):
 #     print("Server mode started. Waiting for client...")
@@ -66,24 +67,26 @@ def get_config_data(network_name, password):
         return None
 
 
-def connect_to_network(network_name, password, nat_type):
+def connect_to_network(network_name, password, nat_type, external_port):
     print(f"Connecting to {network_name}")
     config_data = get_config_data(network_name, password)
     if config_data is None:
         print("Invalid network name or password.")
         network_name = input("Enter network name: ")
         password = input("Enter password: ")
-        return connect_to_network(network_name, password, nat_type)
+        return connect_to_network(network_name, password, nat_type, external_port)
     elif nat_type == "Symmetric NAT" and len(config_data["peers"]) == 0:
         print(
             "[ERROR] Symmetric NAT detected. You will need at least one peer with a NAT type other than Symmetric NAT to establish a connection."
         )
         return False
     else:
-        print("Connection established.")
         for peer in config_data["peers"]:
-            client_socket = connect_to_server(peer["ip"], peer["port"])
-            send_message(client_socket, "Hello from client!")
+            connection_result = client.connect_to_server(
+                peer["ip"], peer["port"], external_port
+            )
+            if not connection_result:
+                return False
         return True
 
 
@@ -97,6 +100,16 @@ def main():
     connection_result = connect_to_network(
         input("Enter network name: "), input("Enter password: "), nat_type
     )
+    if not connection_result:
+        print("Failed to connect to the network.")
+        return
+    while True:
+        print("Active connections as client: ")
+        for connection in client.connections:
+            print(f"{connection[0]} : {connection[1]}")
+        index = int(input("Enter index of the connection to send message: "))
+        message = input("Enter message: ")
+        client.send(message, client.clients[index], index)
 
 
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ import socket
 import threading
 from requests import get
 from ipaddress import ip_address
-import network
 
 
 HEADER = 64
