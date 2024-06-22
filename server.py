@@ -62,10 +62,10 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 def handle_client(server_socket):
     print("[SERVER STARTED] Waiting for connections...")
     while True:
-        msg_length, addr = server_socket.recvfrom(HEADER)
-        msg_length = int(msg_length.decode(FORMAT))
-        data, addr = server_socket.recvfrom(msg_length)
-        print(f"Received message from {addr}: {data.decode(FORMAT)}")
+        # msg_length, addr = server_socket.recvfrom(HEADER)
+        # msg_length = int(msg_length.decode(FORMAT))
+        data, addr = server_socket.recvfrom(1024)
+        print(f"Received message from {addr}: {data.decode()}")
         if data:
             message = "This is an automated response."
             server_socket.sendto(message.encode(), addr)

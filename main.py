@@ -57,6 +57,8 @@ import client
 #             "Invalid mode or server mode is not available for symmetric NATs. Exiting."
 #         )
 
+peers = []
+
 
 def get_config_data(network_name, password):
     if network_name == "test" and password == "hello123":
@@ -68,6 +70,7 @@ def get_config_data(network_name, password):
 
 
 def connect_to_network(network_name, password, nat_type, external_port):
+    global peers
     print(f"Connecting to {network_name}")
     config_data = get_config_data(network_name, password)
     if config_data is None:
@@ -85,8 +88,11 @@ def connect_to_network(network_name, password, nat_type, external_port):
             connection_result = client.connect_to_server(
                 peer["ip"], peer["port"], external_port
             )
-            if not connection_result:
-                return False
+            if connection_result:
+                peers.append((peer["ip"], peer["port"]))
+        if len(peers) == 0:
+            print("[ERROR] Failed to connect to any peer.")
+            return False
         return True
 
 
@@ -96,7 +102,7 @@ def main():
         f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
     )
     if nat_type != "Symmetric NAT":
-        server.start_server(external_ip, external_port)
+        server.start_server(external_port)
     connection_result = connect_to_network(
         input("Enter network name: "),
         input("Enter password: "),
@@ -108,11 +114,12 @@ def main():
         return
     while True:
         print("Active connections as client: ")
-        for connection in client.connections:
-            print(f"{connection[0]} : {connection[1]}")
+        for i, peer in enumerate(peers):
+            print(f"{i}: {peer}")
         index = int(input("Enter index of the connection to send message: "))
         message = input("Enter message: ")
-        client.send(message, client.clients[index], index)
+        client.send_to_server(peers[index][0], peers[index][1], message)
+        # client.send(message, client.clients[index], index)
 
 
 if __name__ == "__main__":

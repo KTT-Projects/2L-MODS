@@ -54,16 +54,14 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 # def send(server_ip, server_port, client_socket, msg):
 
 
-def handle_connection(server_ip, server_port, client_socket):
-    print(f"[CONNECTED AS CLIENT] {server_ip} : {server_port}")
-    while True:
-        message = input("Enter message: ")
-        client_socket.sendto(message.encode(), (server_ip, server_port))
-        data, addr = client_socket.recvfrom(1024)
-        print(f"Received message from server: {data.decode()}")
+def handle_connection(server_ip, server_port, client_socket, msg):
+    message = input("Enter message: ")
+    client_socket.sendto(message.encode(), (server_ip, server_port))
+    data, addr = client_socket.recvfrom(1024)
+    print(f"Received message from server: {data.decode()}")
 
 
-def connect_to_server(server_ip, server_port):
+def send_to_server(server_ip, server_port, msg):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_thread = threading.Thread(
         target=handle_connection, args=(server_ip, server_port, client_socket, msg)
