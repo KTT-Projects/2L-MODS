@@ -44,7 +44,7 @@ def start_server(external_ip, external_port):
     global server_address
     global is_listening
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    addr = (external_ip, external_port)
+    addr = ("", external_port)
     try:
         server.bind(addr)
     except OSError:
