@@ -76,7 +76,7 @@ def receive_from_server(client_socket):
 def send_to_server(server_ip, server_port, msg):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_thread = threading.Thread(
-        target=maintain_connection, args=(server_ip, server_port, client_socket, msg)
+        target=maintain_connection, args=(server_ip, server_port, client_socket)
     )
     client_thread.start()
     receive_thread = threading.Thread(target=receive_from_server, args=(client_socket,))
