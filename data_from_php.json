@@ -2,12 +2,12 @@
   "network_name": "test_network",
   "peers": [
     {
-      "ip": "1.73.22.247",
+      "ip": "1.73.30.18",
       "port": 54320
     }
   ],
   "model_distributor": {
-    "ip": "1.73.22.247",
+    "ip": "1.73.30.18",
     "port": 54320
   }
 }
