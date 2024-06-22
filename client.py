@@ -1,9 +1,8 @@
 import socket
 import threading
+import time
+from config import *
 
-HEADER = 64
-FORMAT = "utf-8"
-DISCONNECT_MESSAGE = "!DISCONNECT"
 
 # clients = []
 # connections = []
@@ -54,17 +53,42 @@ DISCONNECT_MESSAGE = "!DISCONNECT"
 # def send(server_ip, server_port, client_socket, msg):
 
 
-def handle_connection(server_ip, server_port, client_socket, msg):
-    message = input("Enter message: ")
-    client_socket.sendto(message.encode(), (server_ip, server_port))
-    data, addr = client_socket.recvfrom(1024)
-    print(f"Received message from server: {data.decode()}")
+def maintain_connection(server_ip, server_port, client_socket):
+    data = IGNORE_MESSAGE
+    while True:
+        client_socket.sendto(data.encode(), (server_ip, server_port))
+        time.sleep(5)
+
+
+def receive_from_server(client_socket):
+    while True:
+        data_length, addr = client_socket.recvfrom(HEADER)
+        data_length = int(data_length.decode())
+        data, addr = client_socket.recvfrom(data_length)
+        if data.decode() == DISCONNECT_MESSAGE:
+            print("Disconnected from the server.")
+            break
+        elif data.decode() == IGNORE_MESSAGE:
+            continue
+        print(f"[RECEIVED] {data.decode()}")
 
 
 def send_to_server(server_ip, server_port, msg):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_thread = threading.Thread(
-        target=handle_connection, args=(server_ip, server_port, client_socket, msg)
+        target=maintain_connection, args=(server_ip, server_port, client_socket, msg)
     )
     client_thread.start()
-    client_thread.join()
+    receive_thread = threading.Thread(target=receive_from_server, args=(client_socket,))
+    receive_thread.start()
+
+
+def test_connection(server_ip, server_port):
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        client_socket.connect((server_ip, server_port))
+        client_socket.sendto("test".encode(), (server_ip, server_port))
+        data, addr = client_socket.recvfrom(1024)
+        return True
+    except:
+        return False

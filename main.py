@@ -85,9 +85,7 @@ def connect_to_network(network_name, password, nat_type, external_port):
         return False
     else:
         for peer in config_data["peers"]:
-            connection_result = client.connect_to_server(
-                peer["ip"], peer["port"], external_port
-            )
+            connection_result = client.test_connection(peer["ip"], peer["port"])
             if connection_result:
                 peers.append((peer["ip"], peer["port"]))
         if len(peers) == 0:
