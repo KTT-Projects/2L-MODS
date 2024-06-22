@@ -1,83 +1,70 @@
-import requests
 import socket
+import stun
 import threading
-import time
 
-# Server URL
-php_server_url = "https://kttprojects.com/tcp_port.php"
-
-# Unique identifier for this client (make sure to change this for the second client)
-client_id = "client1"  # Change to 'client2' for the other client
-
-
-# Function to register the client with the PHP server
-def register_client(port):
-    data = {"client_id": client_id, "port": port}
-    response = requests.post(php_server_url, data=data)
-    print(f"Register response: {response.text}")
+# List of STUN servers
+STUN_SERVERS = [
+    ("stun.l.google.com", 19302),
+    ("stun1.l.google.com", 19302),
+    ("stun2.l.google.com", 19302),
+    ("stun3.l.google.com", 19302),
+    ("stun4.l.google.com", 19302),
+]
 
 
-# Function to retrieve another client's information
-def get_client_info(other_client_id):
-    response = requests.get(php_server_url, params={"client_id": other_client_id})
-    return response.json()
+def get_public_ip_and_port(stun_host="stun.l.google.com", stun_port=19302):
+    nat_type, external_ip, external_port = stun.get_ip_info(
+        stun_host=stun_host, stun_port=stun_port
+    )
+    return nat_type, external_ip, external_port
 
 
-# Function to handle UDP hole punching
-def udp_hole_punch(local_port, remote_ip, remote_port):
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(("", local_port))
-    print(f"Listening on UDP port {local_port}")
-
-    def listen():
-        while True:
-            try:
-                data, addr = sock.recvfrom(1024)
-                print(f"Received message: {data.decode()} from {addr}")
-            except Exception as e:
-                print(f"Listening error: {e}")
-                break
-
-    listening_thread = threading.Thread(target=listen, daemon=True)
-    listening_thread.start()
-
-    # Send a message to the remote client to create the mapping
-    for _ in range(10):  # Send multiple times to ensure the mapping is created
-        sock.sendto(b"Hello", (remote_ip, remote_port))
-        print(f"Sent message to {remote_ip}:{remote_port}")
-        time.sleep(1)  # Send every 1 second
-
-    listening_thread.join()
+def collect_stun_mappings():
+    mappings = []
+    for stun_host, stun_port in STUN_SERVERS:
+        nat_type, public_ip, public_port = get_public_ip_and_port(stun_host, stun_port)
+        mappings.append((nat_type, public_ip, public_port))
+        print(f"STUN Server: {stun_host}:{stun_port}")
+        print(f"NAT Type: {nat_type}")
+        print(f"Public IP: {public_ip}")
+        print(f"Public UDP Port: {public_port}")
+        print("-" * 30)
+    return mappings
 
 
-# Main function
-def main():
-    local_udp_port = 54321  # Local UDP port to listen on
-
-    # Register this client with the PHP server
-    register_client(local_udp_port)
-
-    # Ensure the other client has also registered before attempting to get their info
-    other_client_id = "client2" if client_id == "client1" else "client1"
-
-    other_client_info = {}
-    while "error" in other_client_info or not other_client_info:
-        other_client_info = get_client_info(other_client_id)
-        if "error" in other_client_info:
-            print(f"Error: {other_client_info['error']}. Retrying...")
-            time.sleep(5)  # Wait for 5 seconds before retrying
-        else:
-            print(f"Retrieved client info: {other_client_info}")
-
-    remote_ip = other_client_info.get("ip")
-    remote_port = int(other_client_info.get("port"))
-
-    # Perform UDP hole punching
-    udp_hole_punch(local_udp_port, remote_ip, remote_port)
-
-    # Keep the script running indefinitely
+def listen_for_messages(sock):
     while True:
-        time.sleep(1)
+        data, addr = sock.recvfrom(1024)
+        print(f"Message from {addr}: {data.decode()}")
+
+
+def main():
+    print("Collecting STUN mappings...")
+    mappings = collect_stun_mappings()
+
+    if mappings:
+        nat_type, public_ip, public_port = mappings[0]
+        print(f"Your Public IP: {public_ip}")
+        print(f"Your Public UDP Port: {public_port}")
+
+        # Create UDP socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.bind(("", public_port))
+
+        # Start a thread to listen for incoming messages
+        threading.Thread(target=listen_for_messages, args=(sock,), daemon=True).start()
+
+        # Get peer information from user
+        peer_ip = input("Enter peer's public IP: ")
+        peer_port = int(input("Enter peer's public UDP port: "))
+
+        # Send initial punch-through packet to peer
+        sock.sendto(b"Hello from peer", (peer_ip, peer_port))
+
+        print("You can now send messages. Type your message and press Enter.")
+        while True:
+            message = input()
+            sock.sendto(message.encode(), (peer_ip, peer_port))
 
 
 if __name__ == "__main__":
