@@ -4,12 +4,12 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
 
-my_token = "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"
-# model_name = "openai-community/gpt2-medium"
-model_name = "mistralai/Mistral-7B-v0.1"
+# my_token = "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" (add token=my_token to from_pretrained)
+model_name = "openai-community/gpt2-medium"
+# model_name = "mistralai/Mistral-7B-v0.1"
 
-model = AutoModelForCausalLM.from_pretrained(model_name, token = my_token)
-tokenizer = AutoTokenizer.from_pretrained(model_name, token = my_token)
+model = AutoModelForCausalLM.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 device = torch.device("mps")
 # device = torch.device("cpu")
@@ -22,10 +22,11 @@ inputs = tokenizer(prompt, return_tensors="pt")
 inputs = {key: value.to(device) for key, value in inputs.items()}
 
 with torch.no_grad():
-  token = model.generate(**inputs, max_length=300, eos_token_id=50256, pad_token_id=50256)
+  token = model.generate(**inputs, max_length=100, eos_token_id=50256, pad_token_id=50256)
 
 generated = tokenizer.decode(token[0].tolist(), skip_special_tokens=True)
 print(generated)
+
 # input = {key: value.to(torch.device('mps')) for key, value in input.items()}
 
 # with torch.no_grad():
