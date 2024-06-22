@@ -2,6 +2,7 @@ import socket
 import threading
 import network
 import json
+import server
 
 # def server_mode(server_socket):
 #     print("Server mode started. Waiting for client...")
@@ -55,40 +56,6 @@ import json
 #             "Invalid mode or server mode is not available for symmetric NATs. Exiting."
 #         )
 
-HEADER = 64
-FORMAT = "utf-8"
-DISCONNECT_MESSAGE = "!DISCONNECT"
-
-
-def handle_client(server_socket):
-    connected = True
-    while connected:
-        try:
-            msg_length = server_socket.recv(HEADER).decode(FORMAT)
-            if not msg_length:
-                break
-            msg_length = int(msg_length)
-            msg = server_socket.recv(msg_length).decode(FORMAT)
-            if msg == DISCONNECT_MESSAGE:
-                connected = False
-        except ConnectionResetError:
-            connected = False
-    server_socket.close()
-
-
-def start_server(external_ip, external_port):
-    global server_thread
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("", external_port))
-    print(f"Server started on {external_ip} : {external_port}")
-    server_socket.listen()
-    while True:
-        conn, addr = server_socket.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
-        print(f"[NEW CONNECTION] {addr[0]} : {addr[1]} connected.")
-        print(f"[ACTIVE CONNECTIONS AS SERVER] {threading.active_count() - 1}")
-
 
 def get_config_data(network_name, password):
     if network_name == "test" and password == "hello123":
@@ -97,21 +64,6 @@ def get_config_data(network_name, password):
             return data
     else:
         return None
-
-
-def connect_to_server(server_ip, server_port):
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((server_ip, server_port))
-    print(f"Connected to {server_ip} : {server_port}")
-    return client_socket
-
-
-def send_message(client_socket, message):
-    message_length = len(message)
-    send_length = str(message_length).encode(FORMAT)
-    send_length += b" " * (HEADER - len(send_length))
-    client_socket.send(send_length)
-    client_socket.send(message.encode(FORMAT))
 
 
 def connect_to_network(network_name, password, nat_type):
@@ -141,7 +93,7 @@ def main():
         f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
     )
     if nat_type != "Symmetric NAT":
-        start_server(external_ip, external_port)
+        server.start_server(external_ip, external_port)
     connection_result = connect_to_network(
         input("Enter network name: "), input("Enter password: "), nat_type
     )

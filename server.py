@@ -40,35 +40,23 @@ def handle_client(conn, addr):
     print(f"[ACTIVE CONNECTIONS AS SERVER] {len(connections)}")
 
 
-def start_server():
+def start_server(external_ip, external_port):
     global port
     global server_address
     global is_listening
-    if network.check_internet_connection():
-        server_address = network.get_public_ip()
-        if network.is_ipv4(server_address):
-            server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        elif network.is_ipv6(server_address):
-            server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        while True:
-            if port == -1:
-                port = 5050
-            if port > 65535:
-                print("[ERROR] No available ports.")
-                return
-            addr = (server_address, port)
-            try:
-                server.bind(addr)
-                break
-            except OSError:
-                print(f"Port {port} is occupied. Trying another port...")
-            port += 1
-        server.listen()
-        is_listening = True
-        print(f"Listening on {server_address} : {port}")
-        while True:
-            conn, addr = server.accept()
-            thread = threading.Thread(target=handle_client, args=(conn, addr))
-            thread.start()
-    else:
-        print("[ERROR] No internet connection.")
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    addr = (external_ip, external_port)
+    try:
+        server.bind(addr)
+    except OSError:
+        print(f"[ERROR] Port {external_port} is already in use.")
+        return
+    port = external_port
+    server_address = external_ip
+    server.listen()
+    is_listening = True
+    print(f"Listening on {server_address} : {port}")
+    while True:
+        conn, addr = server.accept()
+        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread.start()
