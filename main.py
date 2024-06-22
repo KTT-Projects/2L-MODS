@@ -122,6 +122,8 @@ def main():
     print(
         f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
     )
+    if nat_type != "Symmetric NAT":
+        start_server(external_ip, external_port)
     connection_result = connect_to_network(
         input("Enter network name: "), input("Enter password: "), nat_type
     )
