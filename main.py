@@ -98,7 +98,10 @@ def main():
     if nat_type != "Symmetric NAT":
         server.start_server(external_ip, external_port)
     connection_result = connect_to_network(
-        input("Enter network name: "), input("Enter password: "), nat_type
+        input("Enter network name: "),
+        input("Enter password: "),
+        nat_type,
+        external_port,
     )
     if not connection_result:
         print("Failed to connect to the network.")

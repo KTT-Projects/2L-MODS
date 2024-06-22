@@ -12,7 +12,7 @@ message = ""
 def connect_to_server(server, port, my_port):
     global clients, connections
     print(f"[CONNECTING TO SERVER] {server} : {port}")
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         client.connect((server, port))
         clients.append(client)

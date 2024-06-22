@@ -43,7 +43,7 @@ def start_server(external_ip, external_port):
     global port
     global server_address
     global is_listening
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     addr = ("", external_port)
     try:
         server.bind(addr)
