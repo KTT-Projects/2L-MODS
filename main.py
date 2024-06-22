@@ -1,186 +1,131 @@
-import os
-from tkinter import *
-from tkinter import messagebox
-import server
-import client
+import socket
 import threading
+import network
 import json
 
-
-def start_server_thread():
-    server.start_server()
-
-
-def start_client_thread(server_address, port_number):
-    client.connect_to_server(server_address, port_number, server.port)
-
-
-def connect_to_server(server_address, port_number):
-    if (server_address, port_number, "Connected") in client.connections:
-        return
-    # Prevent the user from connecting to their own server
-    if server_address == server.server_address and port_number == server.port:
-        messagebox.showerror(
-            "Connection Error",
-            "⚠️ Self-Connection\n\nYou cannot connect to your own server.",
-        )
-        return
-    # Start a new client connection in a separate thread
-    client_thread = threading.Thread(
-        target=start_client_thread,
-        args=(
-            server_address,
-            port_number,
-        ),
-    )
-    client_thread.start()
-    # Check the connection status periodically
-    root.after(100, check_connection_status, server_address, port_number)
+# def server_mode(server_socket):
+#     print("Server mode started. Waiting for client...")
+#     while True:
+#         data, addr = server_socket.recvfrom(1024)
+#         print(f"Received message from {addr}: {data.decode()}")
+#         if data:
+#             message = input("Enter message: ")
+#             server_socket.sendto(message.encode(), addr)
 
 
-def check_connection_status(server_address, port_number):
-    if (server_address, port_number, "Connected") in client.connections:
-        current_text = connection_status_label.cget("text")
-        if current_text == "Status: 🔴 Disconnected":
-            current_text = ""
-        new_text = f"{current_text}[{client.connections.index((server_address, port_number, 'Connected'))}] Status: 🟢 Connected to {server_address} : {port_number}\n"
-        connection_status_label.config(text=new_text)
-    elif (server_address, port_number, "Failed") in client.connections:
-        current_text = connection_status_label.cget("text")
-        if (
-            f"Status: ⚠️ Connection Failed to {server_address} : {port_number}"
-            in current_text
-        ):
-            return
-        if current_text == "Status: 🔴 Disconnected":
-            current_text = ""
-        new_text = f"{current_text}[{client.connections.index((server_address, port_number, 'Failed'))}] Status: ⚠️ Connection Failed to {server_address} : {port_number}\n"
-        connection_status_label.config(text=new_text)
-        # client.connections.remove((server_address, port_number, "Failed"))
+# def client_mode(server_ip, server_port, client_socket):
+#     print("Client mode started. Connecting to server...")
+#     while True:
+#         message = input("Enter message: ")
+#         client_socket.sendto(message.encode(), (server_ip, server_port))
+#         data, addr = client_socket.recvfrom(1024)
+#         print(f"Received message from server: {data.decode()}")
+
+
+# def main():
+#     nat_type, external_ip, external_port = network.get_nat_type()
+#     print(
+#         f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
+#     )
+
+#     if nat_type == "Symmetric NAT":
+#         print("Symmetric NAT detected. Only client mode is available.")
+#         mode = "client"
+#     else:
+#         mode = input("Enter mode (server/client): ").strip().lower()
+
+#     if mode == "server" and nat_type != "Symmetric NAT":
+#         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         server_socket.bind(("", external_port))
+#         print(f"Server started on {external_ip}:{external_port}")
+#         server_thread = threading.Thread(target=server_mode, args=(server_socket,))
+#         server_thread.start()
+#         server_thread.join()
+#     elif mode == "client":
+#         server_ip = input("Enter server public IP: ").strip()
+#         server_port = int(input("Enter server public UDP port: ").strip())
+#         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+#         client_thread = threading.Thread(
+#             target=client_mode, args=(server_ip, server_port, client_socket)
+#         )
+#         client_thread.start()
+#         client_thread.join()
+#     else:
+#         print(
+#             "Invalid mode or server mode is not available for symmetric NATs. Exiting."
+#         )
+
+HEADER = 64
+FORMAT = "utf-8"
+DISCONNECT_MESSAGE = "!DISCONNECT"
+
+
+def handle_client(server_socket):
+    connected = True
+    while connected:
+        try:
+            msg_length = server_socket.recv(HEADER).decode(FORMAT)
+            if not msg_length:
+                break
+            msg_length = int(msg_length)
+            msg = server_socket.recv(msg_length).decode(FORMAT)
+            if msg == DISCONNECT_MESSAGE:
+                connected = False
+        except ConnectionResetError:
+            connected = False
+    server_socket.close()
+
+
+def start_server(external_ip, external_port):
+    global server_thread
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.bind(("", external_port))
+    print(f"Server started on {external_ip} : {external_port}")
+    server_socket.listen()
+    while True:
+        conn, addr = server_socket.accept()
+        thread = threading.Thread(target=handle_client, args=(conn, addr))
+        thread.start()
+        print(f"[NEW CONNECTION] {addr[0]} : {addr[1]} connected.")
+        print(f"[ACTIVE CONNECTIONS AS SERVER] {threading.active_count() - 1}")
+
+
+def get_config_data(network_name, password):
+    if network_name == "test" and password == "hello123":
+        with open("data_from_php.json") as file:
+            data = json.load(file)
+            return data
     else:
-        root.after(100, check_connection_status, server_address, port_number)
+        return None
 
 
-def observe_server_port_change():
-    # Check for changes in the server.port variable
-    if server.is_listening:
-        user_status.config(
-            text=f"Listening on {server.server_address} : {server.port}\n"
-        )
-        return
-    # Schedule the next observation
-    root.after(100, observe_server_port_change)
-
-
-def send_message():
-    if not client.connections:
-        messagebox.showerror(
-            "Connection Error",
-            "⚠️ No Connections\n\nPlease connect to a server before sending a message.",
-        )
-        return
-    elif not id_entry.get() or not int(id_entry.get()) < len(client.clients):
-        messagebox.showerror(
-            "ID Error",
-            "⚠️ No ID\n\nPlease enter a correct ID of the server you want to send a message to.",
-        )
-        return
-    elif not message_entry.get():
-        messagebox.showerror(
-            "Message Error",
-            "⚠️ No Message\n\nPlease enter a message to send.",
-        )
-        return
-    selected_id = id_entry.get()
-    message = message_entry.get()
-    # Send the message to the selected ID
-    client.send(message, client.clients[int(selected_id)], int(selected_id))
-    message_entry.delete(0, END)
-    if message == client.DISCONNECT_MESSAGE:
-        id_entry.delete(0, END)
-        update_all_connections()
-
-
-def update_all_connections():
-    # Reset the connections list once and update it
-    connection_status_label.config(text="")
-    if len(client.connections) == 0:
-        connection_status_label.config(text="Status: 🔴 Disconnected")
-        return
-    new_text = ""
-    for connection in client.connections:
-        new_text += f"[{client.connections.index(connection)}] Status: 🟢 Connected to {connection[0]} : {connection[1]}\n"
-    connection_status_label.config(text=new_text)
-
-
-def load_config():
-    global config_data
-    try:
-        with open("config.json", "r") as file:
-            config_data = json.load(file)
-        return True
-    except FileNotFoundError:
-        print("[ERROR] Config file not found.")
-        messagebox.showerror(
-            "Config Error",
-            "⚠️ Config File Not Found\n\nPlease create a config.json file.",
+def connect_to_network(network_name, password, nat_type):
+    print(f"Connecting to {network_name}")
+    config_data = get_config_data(network_name, password)
+    if config_data is None:
+        print("Invalid network name or password.")
+        network_name = input("Enter network name: ")
+        password = input("Enter password: ")
+        return connect_to_network(network_name, password, nat_type)
+    elif nat_type == "Symmetric NAT" and len(config_data["peers"]) == 0:
+        print(
+            "[ERROR] Symmetric NAT detected. You will need at least one peer with a NAT type other than Symmetric NAT to establish a connection."
         )
         return False
-
-
-def attempt_connection():
-    for peer in config_data["peers"]:
-        if peer["ip"] != server.server_address or peer["port"] != server.port:
-            print(f"[INFO] Connecting to {peer['ip']} : {peer['port']}")
-            connect_to_server(peer["ip"], peer["port"])
-
-
-def data_setup():
-    # Create a folder for the data if it doesn't exist
-    try:
-        os.mkdir("./data/" + config_data["network_name"])
-    except FileExistsError:
-        pass
-
-
-def join_network():
-    print("[INFO] Attempting to connect to the network...")
-    flag = load_config()
-    if flag:
-        attempt_connection()
-        data_setup()
-        update_all_connections()
     else:
-        print("[ERROR] Failed to connect to the network.")
+        print("Connection established.")
+        return True
 
 
-# Start the server in a separate thread
-server_thread = threading.Thread(target=start_server_thread)
-server_thread.start()
-root = Tk()
-root.title("2L-MODS")
-root.geometry("800x800")
+def main():
+    nat_type, external_ip, external_port = network.get_nat_type()
+    print(
+        f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
+    )
+    connection_result = connect_to_network(
+        input("Enter network name: "), input("Enter password: "), nat_type
+    )
 
-user_status = Label(root, text="Initializing...\n")
-connection_status_label = Label(root, text="Status: 🔴 Disconnected")
-connect_button = Button(root, text="Join the Network", command=join_network)
 
-id_label = Label(root, text="ID")
-id_entry = Entry(root, width=50)
-message_label = Label(root, text="Message")
-message_entry = Entry(root, width=50)
-send_button = Button(root, text="Send", command=send_message)
-
-user_status.pack()
-connection_status_label.pack()
-connect_button.pack()
-
-id_label.pack()
-id_entry.pack()
-message_label.pack()
-message_entry.pack()
-send_button.pack()
-
-observe_server_port_change()
-
-root.mainloop()
+if __name__ == "__main__":
+    main()
