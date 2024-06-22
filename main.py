@@ -99,6 +99,21 @@ def get_config_data(network_name, password):
         return None
 
 
+def connect_to_server(server_ip, server_port):
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((server_ip, server_port))
+    print(f"Connected to {server_ip} : {server_port}")
+    return client_socket
+
+
+def send_message(client_socket, message):
+    message_length = len(message)
+    send_length = str(message_length).encode(FORMAT)
+    send_length += b" " * (HEADER - len(send_length))
+    client_socket.send(send_length)
+    client_socket.send(message.encode(FORMAT))
+
+
 def connect_to_network(network_name, password, nat_type):
     print(f"Connecting to {network_name}")
     config_data = get_config_data(network_name, password)
@@ -114,6 +129,9 @@ def connect_to_network(network_name, password, nat_type):
         return False
     else:
         print("Connection established.")
+        for peer in config_data["peers"]:
+            client_socket = connect_to_server(peer["ip"], peer["port"])
+            send_message(client_socket, "Hello from client!")
         return True
 
 
