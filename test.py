@@ -26,12 +26,3 @@ with torch.no_grad():
 
 generated = tokenizer.decode(token[0].tolist(), skip_special_tokens=True)
 print(generated)
-print(model)
-
-# input = {key: value.to(torch.device('mps')) for key, value in input.items()}
-
-# with torch.no_grad():
-#     output = model.generate(**input, max_length=200, num_beams=5)
-
-# generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
-# print(generated_text)

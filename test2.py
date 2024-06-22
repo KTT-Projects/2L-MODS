@@ -1,22 +1,28 @@
+import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
-print("Device:", device)
+# os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
 
+# my_token = "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" (add token=my_token to from_pretrained)
 model_name = "openai-community/gpt2-medium"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# model_name = "mistralai/Mistral-7B-v0.1"
+
 model = AutoModelForCausalLM.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
+device = torch.device("mps")
+# device = torch.device("cpu")
 model.to(device)
+model.eval()
 
-def generate_text(prompt):
-    inputs = tokenizer(prompt, return_tensors="pt")
-    with torch.no_grad():
-      outputs = model.generate(inputs[0], max_length=300)
-    generated = tokenizer.decode(outputs[0].tolist(), skip_special_tokens=True)
-    return generated
+prompt = "What is the future of Japan?"
+inputs = tokenizer(prompt, return_tensors="pt")
 
-prompt = "Once upon a time"
-generated_text = generate_text(prompt)
-print(generated_text)
+inputs = {key: value.to(device) for key, value in inputs.items()}
+
+with torch.no_grad():
+  token = model.generate(**inputs, max_length=100, eos_token_id=50256, pad_token_id=50256)
+
+generated = tokenizer.decode(token[0].tolist(), skip_special_tokens=True)
+print(generated)
