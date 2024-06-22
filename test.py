@@ -2,7 +2,7 @@ import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
+# os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
 
 # my_token = "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" (add token=my_token to from_pretrained)
 model_name = "openai-community/gpt2-medium"
@@ -26,6 +26,7 @@ with torch.no_grad():
 
 generated = tokenizer.decode(token[0].tolist(), skip_special_tokens=True)
 print(generated)
+print(model)
 
 # input = {key: value.to(torch.device('mps')) for key, value in input.items()}
 
