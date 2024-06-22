@@ -21,7 +21,14 @@ def connect_to_server(server, port, my_port):
     try:
         client.connect((server, port))
         clients.append(client)
-        connections.append((server, port, "Connected"))
+        if (server, port, "Failed") in connections:
+            connections[connections.index((server, port, "Failed"))] = (
+                server,
+                port,
+                "Connected",
+            )
+        else:
+            connections.append((server, port, "Connected"))
         print(f"[CONNECTED TO SERVER] {server} : {port}")
         print(f"[ACTIVE CONNECTIONS AS CLIENT] {len(clients)}")
         send(str(my_port), client, len(clients) - 1)

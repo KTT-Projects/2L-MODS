@@ -17,10 +17,6 @@ def start_client_thread(server_address, port_number):
 
 def connect_to_server(server_address, port_number):
     if (server_address, port_number, "Connected") in client.connections:
-        messagebox.showerror(
-            "Connection Error",
-            "⚠️ Already Connected\n\nYou are already connected to this server.",
-        )
         return
     # Prevent the user from connecting to their own server
     if server_address == server.server_address and port_number == server.port:
@@ -50,11 +46,17 @@ def check_connection_status(server_address, port_number):
         new_text = f"{current_text}[{client.connections.index((server_address, port_number, 'Connected'))}] Status: 🟢 Connected to {server_address} : {port_number}\n"
         connection_status_label.config(text=new_text)
     elif (server_address, port_number, "Failed") in client.connections:
-        messagebox.showerror(
-            "Connection Error",
-            f"⚠️ Connection Failed\n\nPlease check the IP address ({server_address}) and port ({port_number}) and try again.",
-        )
-        client.connections.remove((server_address, port_number, "Failed"))
+        current_text = connection_status_label.cget("text")
+        if (
+            f"Status: ⚠️ Connection Failed to {server_address} : {port_number}"
+            in current_text
+        ):
+            return
+        if current_text == "Status: 🔴 Disconnected":
+            current_text = ""
+        new_text = f"{current_text}[{client.connections.index((server_address, port_number, 'Failed'))}] Status: ⚠️ Connection Failed to {server_address} : {port_number}\n"
+        connection_status_label.config(text=new_text)
+        # client.connections.remove((server_address, port_number, "Failed"))
     else:
         root.after(100, check_connection_status, server_address, port_number)
 
@@ -147,6 +149,7 @@ def join_network():
     if flag:
         attempt_connection()
         data_setup()
+        update_all_connections()
     else:
         print("[ERROR] Failed to connect to the network.")
 
