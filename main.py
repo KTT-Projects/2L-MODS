@@ -23,7 +23,7 @@ def get_config_data(network_name, password):
 
 
 def connect_to_network(network_name, password, nat_type, external_ip, external_port):
-    global peers, network_name_, password_, server_peers, peers_ip
+    global peers, network_name_, password_, peers_ip
     network_name_ = network_name
     password_ = password
     config_data = get_config_data(network_name, password)
@@ -31,7 +31,9 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
         print("[ERROR] Invalid network name or password.")
         network_name = input("Enter network name: ")
         password = input("Enter password: ")
-        return connect_to_network(network_name, password, nat_type, external_port)
+        return connect_to_network(
+            network_name, password, nat_type, external_ip, external_port
+        )
     elif nat_type == "Symmetric NAT" and len(config_data["peers"]) == 0:
         print(
             "[ERROR] Symmetric NAT detected. You will need at least one peer with a NAT type other than Symmetric NAT to establish a connection."
@@ -42,16 +44,14 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
             if (peer["ip"] == external_ip and peer["port"] == external_port) or peer[
                 "nat_type"
             ] == "server_no":
-                peers_ip.append(peer["ip"])
                 continue
+            peers_ip.append(peer["ip"])
             connection_result = client.test_connection(peer["ip"], peer["port"])
             if (not connection_result) and ((peer["id"], peer["port"]) in peers):
                 peers.remove((peer["id"], peer["port"]))
-                peers_ip.remove(peer["ip"])
             else:
-                if not (peer["id"], peer["port"]) in peers:
-                    peers.append((peer["id"], peer["port"]))
-                    peers_ip.append(peer["ip"])
+                if not (peer["ip"], peer["port"]) in peers:
+                    peers.append((peer["ip"], peer["port"]))
         return True
 
 
