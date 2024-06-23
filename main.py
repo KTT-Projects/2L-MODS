@@ -31,9 +31,7 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
         print("[ERROR] Invalid network name or password.")
         network_name = input("Enter network name: ")
         password = input("Enter password: ")
-        return connect_to_network(
-            network_name, password, nat_type, external_ip, external_port
-        )
+        return False
     elif nat_type == "Symmetric NAT" and len(config_data["peers"]) == 0:
         print(
             "[ERROR] Symmetric NAT detected. You will need at least one peer with a NAT type other than Symmetric NAT to establish a connection."
@@ -41,9 +39,9 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
         return False
     else:
         for peer in config_data["peers"]:
-            if (peer["ip"] == external_ip and peer["port"] == external_port) or peer[
-                "nat_type"
-            ] == "server_no":
+            if (peer["ip"] == external_ip and peer["port"]) or (
+                peer["nat_type"] == "server_no"
+            ):
                 continue
             peers_ip.append(peer["ip"])
             connection_result = client.test_connection(peer["ip"], peer["port"])
@@ -115,8 +113,8 @@ def main():
 def test_send():
     while True:
         for peer in peers:
-            message = "Hello from client"
-            client.send_to_server(peer[0], peer[1], message)
+            message = "Hello from server!"
+            server.send_to_client(peer, message)
         time.sleep(5)
 
 

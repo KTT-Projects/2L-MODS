@@ -9,7 +9,7 @@
     {
       "ip": "133.106.50.56",
       "port": 2049,
-      "nat_type": "server_ok"
+      "nat_type": "server_no"
     }
   ],
   "model_distributor": {

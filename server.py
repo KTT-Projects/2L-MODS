@@ -3,11 +3,13 @@ import threading
 import time
 from config import *
 
+server_sockets = dict()
 clients = []
 
 
-def send_to_client(server_socket, addr, msg):
-    server_socket.sendto(msg.encode(), addr)
+def send_to_client(addr, msg):
+    print(f"[SENT] {msg} to {addr}")
+    server_sockets[addr].sendto(msg.encode(), addr)
 
 
 def recieve_from_client(server_socket, peers_ip):
@@ -20,6 +22,7 @@ def recieve_from_client(server_socket, peers_ip):
         if data == TEST_MESSAGE:
             server_socket.sendto(TEST_MESSAGE.encode(), addr)
             clients.append(addr)
+            server_sockets[addr] = server_socket
             print(f"[NEW CONNECTION] Connected to {addr}")
             continue
         else:
