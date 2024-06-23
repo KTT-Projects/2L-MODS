@@ -109,10 +109,14 @@ def main():
             external_port,
         ),
     ).start()
+    threading.Thread(target=test_send).start()
+
+
+def test_send():
     while True:
-        for index, peer in enumerate(peers):
+        for peer in peers:
             message = "Hello from client"
-            client.send_to_server(index, message)
+            client.send_to_server(peer[0], peer[1], message)
         time.sleep(5)
 
 
