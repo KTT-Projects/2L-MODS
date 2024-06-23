@@ -2,17 +2,13 @@ import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-# os.environ['PYTORCH_MPS_HIGH_WATERMARK_RATIO'] = '0.0'
 
-# my_token = "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" (add token=my_token to from_pretrained)
 model_name = "openai-community/gpt2-medium"
-# model_name = "mistralai/Mistral-7B-v0.1"
 
 model = AutoModelForCausalLM.from_pretrained(model_name)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
 device = torch.device("mps")
-# device = torch.device("cpu")
 model.to(device)
 model.eval()
 
