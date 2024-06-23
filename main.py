@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
 
 # Layer分配
-Layer = input()
+Layer = get_layer()
 
 if Layer in 0 or "end":
     print('must'),
