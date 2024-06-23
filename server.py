@@ -39,11 +39,11 @@ def send_to_client(server_socket, addr, msg):
     server_socket.sendto(msg.encode(), addr)
 
 
-def recieve_from_client(server_socket, peers_ip, server_peers):
+def recieve_from_client(server_socket, peers_ip):
     while True:
         data, addr = server_socket.recvfrom(SIZE)
         data = data.decode()
-        if (addr[0] not in peers_ip) and (addr[0] not in server_peers):
+        if addr[0] not in peers_ip:
             print(f"[WARNING] Unauthorized connection from {addr[0]}")
             continue
         if data == TEST_MESSAGE:
