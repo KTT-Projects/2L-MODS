@@ -62,9 +62,7 @@ def maintain_connection(server_ip, server_port, client_socket):
 
 def receive_from_server(client_socket):
     while True:
-        data_length, addr = client_socket.recvfrom(HEADER)
-        data_length = int(data_length.decode())
-        data, addr = client_socket.recvfrom(data_length)
+        data, addr = client_socket.recvfrom(SIZE)
         if data.decode() == DISCONNECT_MESSAGE:
             print("Disconnected from the server.")
             break
