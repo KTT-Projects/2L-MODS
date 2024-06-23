@@ -2,6 +2,7 @@ import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
+os.environ["USE_FLASH_ATTENTION_2"] = "false"
 
 model_name = "microsoft/Phi-3-vision-128k-instruct"
 
