@@ -47,8 +47,8 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
                 continue
             peers_ip.append(peer["ip"])
             connection_result = client.test_connection(peer["ip"], peer["port"])
-            if (not connection_result) and ((peer["id"], peer["port"]) in peers):
-                peers.remove((peer["id"], peer["port"]))
+            if (not connection_result) and ((peer["ip"], peer["port"]) in peers):
+                peers.remove((peer["ip"], peer["port"]))
             else:
                 if not (peer["ip"], peer["port"]) in peers:
                     peers.append((peer["ip"], peer["port"]))
