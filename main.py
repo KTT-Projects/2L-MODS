@@ -116,3 +116,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+# Layer分配
+Layer = input()
+
+if Layer in 0 or "end":
+    print('must'),
+    
+    
