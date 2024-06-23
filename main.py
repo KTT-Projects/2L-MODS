@@ -59,6 +59,7 @@ import client
 #         )
 
 peers = []
+non_server_peers = []
 
 
 def get_config_data(network_name, password):
@@ -89,6 +90,7 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
             if (peer["ip"] == external_ip and peer["port"] == external_port) or peer[
                 "nat_type"
             ] == "server_no":
+                non_server_peers.append(peer["ip"])
                 continue
             connection_result = client.test_connection(peer["ip"], peer["port"])
             if connection_result:
@@ -113,7 +115,7 @@ def main():
     )
     if nat_type != "Symmetric NAT":
         threading.Thread(
-            target=server.start_server, args=(external_port, peers)
+            target=server.start_server, args=(external_port, non_server_peers)
         ).start()
     if not connection_result:
         print("Failed to connect to the network.")

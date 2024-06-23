@@ -84,6 +84,7 @@ def test_connection(server_ip, server_port):
             target=receive_from_server, args=(client_socket,)
         )
         receive_thread.start()
+        print(f"[CONNECTED TO SERVER] {server_ip} : {server_port}")
         return True
     else:
         return False
