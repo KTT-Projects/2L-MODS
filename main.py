@@ -69,7 +69,7 @@ def get_config_data(network_name, password):
         return None
 
 
-def connect_to_network(network_name, password, nat_type, external_port):
+def connect_to_network(network_name, password, nat_type, external_ip, external_port):
     global peers
     print(f"Connecting to {network_name}")
     config_data = get_config_data(network_name, password)
@@ -85,10 +85,12 @@ def connect_to_network(network_name, password, nat_type, external_port):
         return False
     else:
         for peer in config_data["peers"]:
+            if peer["ip"] == external_ip and peer["port"] == external_port:
+                continue
             connection_result = client.test_connection(peer["ip"], peer["port"])
             if connection_result:
                 peers.append((peer["ip"], peer["port"]))
-        if len(peers) == 0:
+        if len(peers) == 0 and nat_type == "Symmetric NAT":
             print("[ERROR] Failed to connect to any peer.")
             return False
         return True
@@ -99,14 +101,17 @@ def main():
     print(
         f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
     )
-    if nat_type != "Symmetric NAT":
-        server.start_server(external_port)
     connection_result = connect_to_network(
         input("Enter network name: "),
         input("Enter password: "),
         nat_type,
+        external_ip,
         external_port,
     )
+    if nat_type != "Symmetric NAT":
+        threading.Thread(
+            target=server.start_server, args=(external_port, peers)
+        ).start()
     if not connection_result:
         print("Failed to connect to the network.")
         return
@@ -117,7 +122,6 @@ def main():
         index = int(input("Enter index of the connection to send message: "))
         message = input("Enter message: ")
         client.send_to_server(peers[index][0], peers[index][1], message)
-        # client.send(message, client.clients[index], index)
 
 
 if __name__ == "__main__":

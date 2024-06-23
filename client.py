@@ -86,5 +86,6 @@ def test_connection(server_ip, server_port):
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         client_socket.connect((server_ip, server_port))
         return True
-    except:
+    except Exception as e:
+        print(f"[ERROR] Failed to connect to the server: {e}")
         return False

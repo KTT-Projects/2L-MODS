@@ -1,13 +1,13 @@
 {
-  "network_name": "test_network",
+  "network_name": "test",
   "peers": [
     {
-      "ip": "133.106.204.76",
+      "ip": "133.106.204.181",
       "port": 54320
     }
   ],
   "model_distributor": {
-    "ip": "133.106.204.76",
+    "ip": "133.106.204.181",
     "port": 54320
   }
 }
