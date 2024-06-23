@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 import network
 import json
 import server
@@ -115,13 +116,16 @@ def main():
     if not connection_result:
         print("Failed to connect to the network.")
         return
+    print("Active connections as client: ")
+    if len(peers) == 0:
+        print("None")
+    for i, peer in enumerate(peers):
+        print(f"{i}: {peer}")
     while True:
-        print("Active connections as client: ")
-        for i, peer in enumerate(peers):
-            print(f"{i}: {peer}")
-        index = int(input("Enter index of the connection to send message: "))
-        message = input("Enter message: ")
-        client.send_to_server(peers[index][0], peers[index][1], message)
+        for index, peer in enumerate(peers):
+            message = "Hello from client"
+            client.send_to_server(index, message)
+        time.sleep(5)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import threading
 import time
 from config import *
 
+client_sockets = []
 
 # clients = []
 # connections = []
@@ -53,39 +54,36 @@ from config import *
 # def send(server_ip, server_port, client_socket, msg):
 
 
-def maintain_connection(server_ip, server_port, client_socket):
-    data = IGNORE_MESSAGE
-    while True:
-        client_socket.sendto(data.encode(), (server_ip, server_port))
-        time.sleep(5)
+# def maintain_connection(server_ip, server_port, client_socket):
+#     data = IGNORE_MESSAGE
+#     while True:
+#         client_socket.sendto(data.encode(), (server_ip, server_port))
+#         time.sleep(5)
 
 
 def receive_from_server(client_socket):
     while True:
         data, addr = client_socket.recvfrom(SIZE)
-        if data.decode() == DISCONNECT_MESSAGE:
-            print("Disconnected from the server.")
-            break
-        elif data.decode() == IGNORE_MESSAGE:
+        if data.decode() == IGNORE_MESSAGE:
             continue
         print(f"[RECEIVED] {data.decode()}")
 
 
-def send_to_server(server_ip, server_port, msg):
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    client_thread = threading.Thread(
-        target=maintain_connection, args=(server_ip, server_port, client_socket)
-    )
-    client_thread.start()
-    receive_thread = threading.Thread(target=receive_from_server, args=(client_socket,))
-    receive_thread.start()
+def send_to_server(index, data):
+    client_sockets[index].send(data.encode())
 
 
 def test_connection(server_ip, server_port):
-    try:
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        client_socket.connect((server_ip, server_port))
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    client_socket.connect((server_ip, server_port))
+    client_socket.send(TEST_MESSAGE.encode())
+    data, addr = client_socket.recvfrom(SIZE)
+    if data.decode() == TEST_MESSAGE:
+        client_sockets.append(client_socket)
+        receive_thread = threading.Thread(
+            target=receive_from_server, args=(client_socket,)
+        )
+        receive_thread.start()
         return True
-    except Exception as e:
-        print(f"[ERROR] Failed to connect to the server: {e}")
+    else:
         return False
