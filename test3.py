@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-torch.manual_seed(0)
 input_data = torch.randn(1, 10)
 print("Data Set:", input_data)
 
@@ -45,7 +44,6 @@ def hook_model1(layer_name):
   return hook
 for name, layer in model1.named_children():
   layer.register_forward_hook(hook_model1(name))
-torch.manual_seed(0)
 with torch.no_grad():
   model1_output = model1(input_data)
 print("Model 1: {")
