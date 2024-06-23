@@ -113,10 +113,9 @@ def main():
 
 def test_send():
     while True:
-        print("Sending message to peers...")
-        for peer in peers:
+        for peer_ip in peers_ip:
             message = "Hello from server!"
-            server.send_to_client(peer, message)
+            server.send_to_client(peer_ip, message)
         time.sleep(5)
 
 

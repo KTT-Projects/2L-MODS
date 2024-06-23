@@ -19,6 +19,8 @@ def send_to_server(server_ip, server_port, data):
 
 
 def test_connection(server_ip, server_port):
+    if (server_ip, server_port) in client_sockets:
+        return True
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     client_socket.connect((server_ip, server_port))
     client_socket.send(TEST_MESSAGE.encode())

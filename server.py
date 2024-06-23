@@ -4,15 +4,16 @@ import time
 from config import *
 
 server_sockets = dict()
+addrs = dict()
 clients = []
 
 
-def send_to_client(addr, msg):
-    print(f"[SENT] {msg} to {addr}")
-    server_sockets[addr].sendto(msg.encode(), addr)
+def send_to_client(client_ip, msg):
+    server_sockets[client_ip].sendto(msg.encode(), addrs[client_ip])
 
 
 def recieve_from_client(server_socket, peers_ip):
+    global clients, server_sockets, addrs
     while True:
         data, addr = server_socket.recvfrom(SIZE)
         data = data.decode()
@@ -23,6 +24,7 @@ def recieve_from_client(server_socket, peers_ip):
             server_socket.sendto(TEST_MESSAGE.encode(), addr)
             clients.append(addr)
             server_sockets[addr] = server_socket
+            addrs[addr[0]] = addr
             print(f"[NEW CONNECTION] Connected to {addr}")
             continue
         else:
