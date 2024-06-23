@@ -101,13 +101,13 @@ cancel_button = Button(
     button_frame,
     text='キャンセル'
 )
-cancel_button.pack(side='left', padx=(0, 5), expand=True)
+cancel_button.pack(side='left', padx=(0, 5), expand=True,)
 
 conect_button = Button(
     button_frame,
     text='接続',
-    command=send_data
 )
+
 conect_button.pack()#side='right', expand=True)
 
 #結果表示
@@ -116,3 +116,5 @@ result_Label.pack(pady=(10, 0))
 
 root.mainloop()
 
+# Layer処理開始
+print ('aaa')
