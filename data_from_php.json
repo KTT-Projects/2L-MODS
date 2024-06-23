@@ -10,6 +10,11 @@
       "ip": "49.104.47.241",
       "port": 54320,
       "nat_type": "server_no"
+    },
+    {
+      "ip": "133.106.50.56",
+      "port": 54320,
+      "nat_type": "server_no"
     }
   ],
   "model_distributor": {

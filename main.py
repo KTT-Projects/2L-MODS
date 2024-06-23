@@ -6,60 +6,11 @@ import json
 import server
 import client
 
-# def server_mode(server_socket):
-#     print("Server mode started. Waiting for client...")
-#     while True:
-#         data, addr = server_socket.recvfrom(1024)
-#         print(f"Received message from {addr}: {data.decode()}")
-#         if data:
-#             message = input("Enter message: ")
-#             server_socket.sendto(message.encode(), addr)
-
-
-# def client_mode(server_ip, server_port, client_socket):
-#     print("Client mode started. Connecting to server...")
-#     while True:
-#         message = input("Enter message: ")
-#         client_socket.sendto(message.encode(), (server_ip, server_port))
-#         data, addr = client_socket.recvfrom(1024)
-#         print(f"Received message from server: {data.decode()}")
-
-
-# def main():
-#     nat_type, external_ip, external_port = network.get_nat_type()
-#     print(
-#         f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
-#     )
-
-#     if nat_type == "Symmetric NAT":
-#         print("Symmetric NAT detected. Only client mode is available.")
-#         mode = "client"
-#     else:
-#         mode = input("Enter mode (server/client): ").strip().lower()
-
-#     if mode == "server" and nat_type != "Symmetric NAT":
-#         server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#         server_socket.bind(("", external_port))
-#         print(f"Server started on {external_ip}:{external_port}")
-#         server_thread = threading.Thread(target=server_mode, args=(server_socket,))
-#         server_thread.start()
-#         server_thread.join()
-#     elif mode == "client":
-#         server_ip = input("Enter server public IP: ").strip()
-#         server_port = int(input("Enter server public UDP port: ").strip())
-#         client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#         client_thread = threading.Thread(
-#             target=client_mode, args=(server_ip, server_port, client_socket)
-#         )
-#         client_thread.start()
-#         client_thread.join()
-#     else:
-#         print(
-#             "Invalid mode or server mode is not available for symmetric NATs. Exiting."
-#         )
 
 peers = []
 non_server_peers = []
+network_name_ = ""
+password_ = ""
 
 
 def get_config_data(network_name, password):
@@ -72,11 +23,12 @@ def get_config_data(network_name, password):
 
 
 def connect_to_network(network_name, password, nat_type, external_ip, external_port):
-    global peers
-    print(f"Connecting to {network_name}")
+    global peers, network_name_, password_
+    network_name_ = network_name
+    password_ = password
     config_data = get_config_data(network_name, password)
     if config_data is None:
-        print("Invalid network name or password.")
+        print("[ERROR] Invalid network name or password.")
         network_name = input("Enter network name: ")
         password = input("Enter password: ")
         return connect_to_network(network_name, password, nat_type, external_port)
@@ -93,12 +45,22 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
                 non_server_peers.append(peer["ip"])
                 continue
             connection_result = client.test_connection(peer["ip"], peer["port"])
-            if connection_result:
-                peers.append((peer["ip"], peer["port"]))
-        if len(peers) == 0 and nat_type == "Symmetric NAT":
-            print("[ERROR] Failed to connect to any peer.")
-            return False
+            if (not connection_result) and ((peer["id"], peer["port"]) in peers):
+                peers.remove((peer["id"], peer["port"]))
+            else:
+                if not (peer["id"], peer["port"]) in peers:
+                    peers.append((peer["id"], peer["port"]))
         return True
+
+
+def update_peers(network_name, password, nat_type, external_ip, external_port):
+    while True:
+        connection_result = connect_to_network(
+            network_name, password, nat_type, external_ip, external_port
+        )
+        if not connection_result:
+            print("[DISCONNECTED] Disconnected from the network.")
+        time.sleep(5)
 
 
 def main():
@@ -106,6 +68,10 @@ def main():
     print(
         f"NAT Type: {nat_type}, External IP: {external_ip}, External Port: {external_port}"
     )
+    if nat_type != "Symmetric NAT":
+        threading.Thread(
+            target=server.start_server, args=(external_port, non_server_peers)
+        ).start()
     connection_result = connect_to_network(
         input("Enter network name: "),
         input("Enter password: "),
@@ -113,18 +79,34 @@ def main():
         external_ip,
         external_port,
     )
-    if nat_type != "Symmetric NAT":
-        threading.Thread(
-            target=server.start_server, args=(external_port, non_server_peers)
-        ).start()
     if not connection_result:
         print("Failed to connect to the network.")
-        return
+        while True:
+            connection_result = connect_to_network(
+                input("Enter network name: "),
+                input("Enter password: "),
+                nat_type,
+                external_ip,
+                external_port,
+            )
+            if connection_result:
+                break
+            time.sleep(5)
     print("Active connections as client: ")
     if len(peers) == 0:
         print("None")
     for i, peer in enumerate(peers):
         print(f"{i}: {peer}")
+    threading.Thread(
+        target=update_peers,
+        args=(
+            network_name_,
+            password_,
+            nat_type,
+            external_ip,
+            external_port,
+        ),
+    ).start()
     while True:
         for index, peer in enumerate(peers):
             message = "Hello from client"

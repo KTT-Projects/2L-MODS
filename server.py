@@ -42,6 +42,7 @@ def send_to_client(server_socket, addr, msg):
 def recieve_from_client(server_socket, non_server_peers):
     while True:
         data, addr = server_socket.recvfrom(SIZE)
+        data = data.decode()
         if addr[0] not in non_server_peers:
             print(f"[WARNING] Unauthorized connection from {addr[0]}")
             continue
@@ -51,7 +52,7 @@ def recieve_from_client(server_socket, non_server_peers):
             print(f"[NEW CONNECTION] Connected to {addr}")
             continue
         else:
-            print(f"[{addr}] {data.decode()}")
+            print(f"[{addr}] {data}")
 
 
 def start_server(external_port, non_server_peers):
