@@ -124,9 +124,30 @@ if __name__ == "__main__":
 # Layer分配
 Layer = get_layer()
 
-if Layer in 0 or "end":
-    print('must'),
+def send_base():
+    if Layer in 0 or "end":
+        print('must send'),
+        data = Layer
+
+
+peer_numbers = len(peers)
+
+def send_layers():
+    if int.Layer%len(peers) == peer_numbers:
+        Layer = Layer_send
+        data = Layer_send
     
+    # # スレッドを作る
+    # thread1 = threading.Thread(target=send_base)
+    # thread2 = threading.Thread(target=send_layers)
+
+    # # スレッドの処理を開始
+    # thread1.start()
+    # thread2.start()
+
+    # # スレッドの処理を待つ
+    # thread1.join()
+    # thread2.join()
     
-    
-server.send_to_client(ip, port, data)
+def 
+
