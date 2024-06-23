@@ -39,9 +39,9 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
         return False
     else:
         for peer in config_data["peers"]:
-            if (peer["ip"] == external_ip and peer["port"]) or (
-                peer["nat_type"] == "server_no"
-            ):
+            if (peer["ip"] == external_ip and peer["port"] == external_port) or peer[
+                "nat_type"
+            ] == "server_no":
                 continue
             peers_ip.append(peer["ip"])
             connection_result = client.test_connection(peer["ip"], peer["port"])
@@ -112,6 +112,7 @@ def main():
 
 def test_send():
     while True:
+        print("Sending message to peers...")
         for peer in peers:
             message = "Hello from server!"
             server.send_to_client(peer, message)
