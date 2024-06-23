@@ -86,7 +86,9 @@ def connect_to_network(network_name, password, nat_type, external_ip, external_p
         return False
     else:
         for peer in config_data["peers"]:
-            if peer["ip"] == external_ip and peer["port"] == external_port:
+            if (peer["ip"] == external_ip and peer["port"] == external_port) or peer[
+                "nat_type"
+            ] == "server_no":
                 continue
             connection_result = client.test_connection(peer["ip"], peer["port"])
             if connection_result:

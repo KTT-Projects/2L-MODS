@@ -3,7 +3,13 @@
   "peers": [
     {
       "ip": "133.106.204.181",
-      "port": 54320
+      "port": 54320,
+      "nat_type": "server_ok"
+    },
+    {
+      "ip": "49.104.47.241",
+      "port": 54320,
+      "nat_type": "server_no"
     }
   ],
   "model_distributor": {
