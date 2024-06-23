@@ -39,11 +39,11 @@ def send_to_client(server_socket, addr, msg):
     server_socket.sendto(msg.encode(), addr)
 
 
-def recieve_from_client(server_socket, non_server_peers):
+def recieve_from_client(server_socket, peers_ip):
     while True:
         data, addr = server_socket.recvfrom(SIZE)
         data = data.decode()
-        if addr[0] not in non_server_peers:
+        if addr[0] not in peers_ip:
             print(f"[WARNING] Unauthorized connection from {addr[0]}")
             continue
         if data == TEST_MESSAGE:
@@ -55,11 +55,11 @@ def recieve_from_client(server_socket, non_server_peers):
             print(f"[{addr}] {data}")
 
 
-def start_server(external_port, non_server_peers):
+def start_server(external_port, peers_ip):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_socket.bind(("", external_port))
     print("[SERVER STARTED] Waiting for connections...")
     receive_thread = threading.Thread(
-        target=recieve_from_client, args=(server_socket, non_server_peers)
+        target=recieve_from_client, args=(server_socket, peers_ip)
     )
     receive_thread.start()

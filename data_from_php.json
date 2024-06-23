@@ -2,19 +2,14 @@
   "network_name": "test",
   "peers": [
     {
-      "ip": "133.106.204.181",
+      "ip": "133.106.204.156",
       "port": 54320,
       "nat_type": "server_ok"
     },
     {
-      "ip": "49.104.47.241",
+      "ip": "49.106.112.156",
       "port": 54320,
-      "nat_type": "server_no"
-    },
-    {
-      "ip": "133.106.50.56",
-      "port": 54320,
-      "nat_type": "server_no"
+      "nat_type": "server_ok"
     }
   ],
   "model_distributor": {
