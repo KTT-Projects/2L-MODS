@@ -5,25 +5,33 @@ from collections import OrderedDict
 
 torch.manual_seed(0)
 
-# class NetFunctional(nn.Module):
-#     def __init__(self, input, hidden, output, dropout):
-#         super().__init__()
-#         self.fc1 = nn.Linear(input, hidden)
-#         self.fc2 = nn.Linear(hidden, output)
-#         self.relu = nn.ReLU()
-#         self.dropout = nn.Dropout(dropout)
-
-#     def forward(self, x):
-#         x = self.fc1(x)
-#         x = self.relu(x)
-#         x = self.dropout(x)
-#         x = self.fc2(x)
-#         return x
-
 model = nn.Sequential(
   nn.Linear(10, 5),
   nn.Linear(5, 2)
 )
 
-def forward_hook(model, input, output):
-  print('input:', input[0].shape, 'output:', output.shape)
+model.eval()
+
+input_data = torch.randn(1, 10)
+
+inputs = {}
+outputs = {}
+
+def forward_hook(layry):
+  def hook(module, input, output):
+    inputs[layry] = input
+    outputs[layry] = output
+  return hook
+
+for name, layer in model.named_children():
+  layer.register_forward_hook(forward_hook(name))
+
+with torch.no_grad():
+  output = model(input_data)
+
+for name in inputs:
+  print(f"Layer: {name}")
+  print(f"Input: {inputs[name]}")
+  print(f"Output: {outputs[name]}")
+
+print("Final output:", output)
